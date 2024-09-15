@@ -8,17 +8,17 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/aRestless/nexus/pkg/client"
+	"github.com/aRestless/nexus/pkg/nebula"
+	"github.com/gofrs/flock"
+	"github.com/sirupsen/logrus"
+	"github.com/slackhq/nebula/util"
+	"github.com/spf13/cobra"
 	"log"
 	"math/big"
 	"net/netip"
 	"os"
 	"time"
-
-	"github.com/aRestless/nexus/pkg/client"
-	"github.com/aRestless/nexus/pkg/nebula"
-	"github.com/sirupsen/logrus"
-	"github.com/slackhq/nebula/util"
-	"github.com/spf13/cobra"
 )
 
 func initNebulaCmd() *cobra.Command {
@@ -162,6 +162,15 @@ func nebulaRun(cmd *cobra.Command, args []string) {
 }
 
 func mustCreateTLSCertificate(commonName, clientCertPath, clientKeyPath string) {
+	fileLockPath := fmt.Sprintf("%s.lock", clientKeyPath)
+	fileLock := flock.New(fileLockPath)
+
+	err := fileLock.Lock()
+	defer fileLock.Unlock()
+	if err != nil {
+		panic(fmt.Errorf("cannot lock file %s: %w", fileLockPath, err))
+	}
+
 	if _, err := os.Stat(clientKeyPath); err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			panic(fmt.Errorf("file stat for %s: %w", clientKeyPath, err))
