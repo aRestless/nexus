@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Get tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build for Linux AMD64
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o dist/nexus-linux-amd64 .
+          chmod +x dist/nexus-linux-amd64
+          tar -czf dist/nexus-linux-amd64.tar.gz -C dist nexus-linux-amd64
+
+      - name: Build for Linux ARM7
+        run: |
+          GOOS=linux GOARCH=arm GOARM=7 go build -o dist/nexus-linux-arm-7 .
+          chmod +x dist/nexus-linux-arm-7
+          tar -czf dist/nexus-linux-arm-7.tar.gz -C dist nexus-linux-arm-7
+
+      - name: Build for Windows AMD64
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o dist/nexus-windows-amd64.exe .
+          zip -j dist/nexus-windows-amd64.zip dist/nexus-windows-amd64.exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/nexus-linux-amd64.tar.gz
+            dist/nexus-linux-arm-7.tar.gz
+            dist/nexus-windows-amd64.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-push-docker:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Get tag name
+        id: tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build static binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags '-extldflags "-static"' -o nexus .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nexus:${{ steps.tag.outputs.TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/nexus:latest
+          platforms: linux/amd64
+
