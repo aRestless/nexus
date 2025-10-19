@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/go-chi/chi/v5 v5.2.3
+	github.com/gofrs/flock v0.13.0
 	github.com/j-keck/arping v1.0.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/slackhq/nebula v1.9.7
@@ -23,13 +24,13 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cyberdelia/go-metrics-graphite v0.0.0-20161219230853-39f87cc3b432 // indirect
 	github.com/flynn/noise v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gaissmai/bart v0.25.1 // indirect
+	github.com/gaissmai/bart v0.11.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
-	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
